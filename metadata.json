@@ -1,0 +1,5 @@
+{
+  "name": "NutriLens",
+  "description": "Analise seus alimentos com IA para obter informações nutricionais e insights de saúde a partir de fotos.",
+  "requestFramePermissions": ["camera"]
+}
