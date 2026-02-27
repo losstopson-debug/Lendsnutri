@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Camera, Upload, X, RefreshCw } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { cn } from '../lib/utils';
 
 interface ImageUploadProps {
