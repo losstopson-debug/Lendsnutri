@@ -12,7 +12,7 @@ export async function analyzeFoodImage(base64Image: string): Promise<string> {
   Use Markdown simples.`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-1.5-flash",
     contents: [
       {
         parts: [
