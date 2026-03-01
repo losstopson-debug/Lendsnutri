@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Markdown from 'react-markdown';
 import { Apple, History, Sparkles, ChevronRight } from 'lucide-react';
 import ImageUpload from './components/ImageUpload';
-import { analyzeFoodImage } from './services/gemini';
+import { analyzeFoodImage, FoodAnalysis } from './services/gemini';
 
 const EXAMPLES = [
   { name: 'Salada Fresh', url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=400&q=80' },
@@ -29,15 +29,17 @@ const EXAMPLES = [
 ];
 
 export default function App() {
-  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<FoodAnalysis | null>(null);
+  const [activeTab, setActiveTab] = useState<'nutrition' | 'health'>('nutrition');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
-  const [history, setHistory] = useState<{ id: string; result: string; date: string }[]>([]);
+  const [history, setHistory] = useState<{ id: string; result: FoodAnalysis; date: string }[]>([]);
 
   const handleImageSelect = async (base64: string) => {
     setPreview(base64);
     setIsAnalyzing(true);
     setAnalysis(null);
+    setActiveTab('nutrition');
     try {
       const result = await analyzeFoodImage(base64);
       setAnalysis(result);
@@ -48,7 +50,11 @@ export default function App() {
       }, ...prev.slice(0, 4)]);
     } catch (error) {
       console.error("Analysis failed:", error);
-      setAnalysis("## Erro na análise\nOcorreu um problema ao tentar analisar a imagem. Por favor, tente novamente.");
+      setAnalysis({
+        name: "Erro na análise",
+        nutritionalInfo: "Ocorreu um problema ao tentar analisar a imagem. Por favor, tente novamente.",
+        healthInsights: "Não foi possível gerar insights de saúde."
+      });
     } finally {
       setIsAnalyzing(false);
     }
@@ -183,8 +189,47 @@ export default function App() {
                     <span className="font-semibold uppercase tracking-wider text-xs">Análise Inteligente</span>
                   </div>
                   
+                  <h2 className="text-2xl font-bold text-zinc-800 mb-6">{analysis.name}</h2>
+
+                  <div className="flex border-b border-zinc-200 mb-6">
+                    <button
+                      onClick={() => setActiveTab('nutrition')}
+                      className={`pb-3 px-4 text-sm font-medium transition-colors relative ${
+                        activeTab === 'nutrition' ? 'text-emerald-600' : 'text-zinc-500 hover:text-zinc-700'
+                      }`}
+                    >
+                      Informações Nutricionais
+                      {activeTab === 'nutrition' && (
+                        <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('health')}
+                      className={`pb-3 px-4 text-sm font-medium transition-colors relative ${
+                        activeTab === 'health' ? 'text-emerald-600' : 'text-zinc-500 hover:text-zinc-700'
+                      }`}
+                    >
+                      Insights de Saúde
+                      {activeTab === 'health' && (
+                        <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500" />
+                      )}
+                    </button>
+                  </div>
+                  
                   <div className="markdown-body prose prose-zinc max-w-none">
-                    <Markdown>{analysis}</Markdown>
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <Markdown>
+                          {activeTab === 'nutrition' ? analysis.nutritionalInfo : analysis.healthInsights}
+                        </Markdown>
+                      </motion.div>
+                    </AnimatePresence>
                   </div>
                 </motion.section>
               )}
@@ -211,7 +256,7 @@ export default function App() {
                     >
                       <div>
                         <p className="text-sm font-medium text-zinc-800">
-                          {item.result.split('\n')[0].replace(/#/g, '').trim() || 'Análise de Alimento'}
+                          {item.result.name || 'Análise de Alimento'}
                         </p>
                         <p className="text-xs text-zinc-400">{item.date}</p>
                       </div>
