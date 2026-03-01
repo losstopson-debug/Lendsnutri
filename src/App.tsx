@@ -51,9 +51,14 @@ export default function App() {
     } catch (error) {
       console.error("Analysis failed:", error);
       setAnalysis({
-        name: "Erro na análise",
-        nutritionalInfo: "Ocorreu um problema ao tentar analisar a imagem. Por favor, tente novamente.",
-        healthInsights: "Não foi possível gerar insights de saúde."
+        nomePrato: "Erro na análise",
+        descricao: "Ocorreu um problema ao tentar analisar a imagem. Por favor, tente novamente.",
+        calorias: { totalEstimado_kcal: "-", porPorcao_kcal: "-" },
+        macronutrientes: { proteinas_g: "-", carboidratos_g: "-", gorduras_g: "-", fibras_g: "-" },
+        micronutrientesPrincipais: [],
+        beneficiosSaude: [],
+        riscosOuAlertas: [],
+        sugestaoParaMelhorar: ""
       });
     } finally {
       setIsAnalyzing(false);
@@ -189,7 +194,8 @@ export default function App() {
                     <span className="font-semibold uppercase tracking-wider text-xs">Análise Inteligente</span>
                   </div>
                   
-                  <h2 className="text-2xl font-bold text-zinc-800 mb-6">{analysis.name}</h2>
+                  <h2 className="text-2xl font-bold text-zinc-800 mb-2">{analysis.nomePrato}</h2>
+                  <p className="text-zinc-600 mb-6">{analysis.descricao}</p>
 
                   <div className="flex border-b border-zinc-200 mb-6">
                     <button
@@ -225,9 +231,86 @@ export default function App() {
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <Markdown>
-                          {activeTab === 'nutrition' ? analysis.nutritionalInfo : analysis.healthInsights}
-                        </Markdown>
+                        {activeTab === 'nutrition' ? (
+                          <div className="space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="bg-zinc-50 p-4 rounded-2xl">
+                                <p className="text-sm text-zinc-500 mb-1">Calorias (Total)</p>
+                                <p className="text-xl font-bold text-zinc-800">{analysis.calorias.totalEstimado_kcal} kcal</p>
+                              </div>
+                              <div className="bg-zinc-50 p-4 rounded-2xl">
+                                <p className="text-sm text-zinc-500 mb-1">Calorias (Porção)</p>
+                                <p className="text-xl font-bold text-zinc-800">{analysis.calorias.porPorcao_kcal} kcal</p>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <h3 className="font-bold text-zinc-800 mb-3">Macronutrientes</h3>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                                  <p className="text-xs text-blue-600 font-medium mb-1">Proteínas</p>
+                                  <p className="text-lg font-bold text-blue-900">{analysis.macronutrientes.proteinas_g}g</p>
+                                </div>
+                                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                                  <p className="text-xs text-orange-600 font-medium mb-1">Carboidratos</p>
+                                  <p className="text-lg font-bold text-orange-900">{analysis.macronutrientes.carboidratos_g}g</p>
+                                </div>
+                                <div className="bg-yellow-50 p-3 rounded-xl border border-yellow-100">
+                                  <p className="text-xs text-yellow-600 font-medium mb-1">Gorduras</p>
+                                  <p className="text-lg font-bold text-yellow-900">{analysis.macronutrientes.gorduras_g}g</p>
+                                </div>
+                                <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                                  <p className="text-xs text-emerald-600 font-medium mb-1">Fibras</p>
+                                  <p className="text-lg font-bold text-emerald-900">{analysis.macronutrientes.fibras_g}g</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {analysis.micronutrientesPrincipais.length > 0 && (
+                              <div>
+                                <h3 className="font-bold text-zinc-800 mb-3">Micronutrientes Principais</h3>
+                                <ul className="list-disc pl-5 space-y-1 text-zinc-700">
+                                  {analysis.micronutrientesPrincipais.map((micro, i) => (
+                                    <li key={i}>{micro}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-6">
+                            {analysis.beneficiosSaude.length > 0 && (
+                              <div>
+                                <h3 className="font-bold text-emerald-700 mb-3 flex items-center gap-2">
+                                  <Sparkles className="w-4 h-4" /> Benefícios
+                                </h3>
+                                <ul className="list-disc pl-5 space-y-1 text-zinc-700">
+                                  {analysis.beneficiosSaude.map((ben, i) => (
+                                    <li key={i}>{ben}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {analysis.riscosOuAlertas.length > 0 && (
+                              <div>
+                                <h3 className="font-bold text-red-600 mb-3">Alertas</h3>
+                                <ul className="list-disc pl-5 space-y-1 text-zinc-700">
+                                  {analysis.riscosOuAlertas.map((risco, i) => (
+                                    <li key={i}>{risco}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {analysis.sugestaoParaMelhorar && (
+                              <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+                                <h3 className="font-bold text-emerald-800 mb-2">Sugestão para Melhorar</h3>
+                                <p className="text-emerald-900 text-sm">{analysis.sugestaoParaMelhorar}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </motion.div>
                     </AnimatePresence>
                   </div>
@@ -256,7 +339,7 @@ export default function App() {
                     >
                       <div>
                         <p className="text-sm font-medium text-zinc-800">
-                          {item.result.name || 'Análise de Alimento'}
+                          {item.result.nomePrato || 'Análise de Alimento'}
                         </p>
                         <p className="text-xs text-zinc-400">{item.date}</p>
                       </div>
