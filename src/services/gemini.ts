@@ -208,22 +208,51 @@ Responda à seguinte dúvida do usuário de forma clara, concisa e em Português
   return response.text || "Não foi possível gerar uma resposta.";
 }
 
-export async function generateRecipe(foodName: string): Promise<string> {
+export interface RecipeAnalysis {
+  tempoPreparo: string;
+  rendimento: string;
+  ingredientes: string[];
+  modoPreparo: string[];
+}
+
+export async function generateRecipe(foodName: string): Promise<RecipeAnalysis> {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("Chave da API do Gemini não configurada.");
   const ai = new GoogleGenAI({ apiKey });
 
   const prompt = `Crie uma receita detalhada para preparar: "${foodName}".
-Inclua:
-1. Tempo de preparo e rendimento.
-2. Lista de ingredientes com quantidades.
-3. Modo de preparo passo a passo.
-Formate a resposta em Markdown, em Português (Brasil).`;
+Responda APENAS em JSON válido.
+Não inclua explicações fora do JSON.`;
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: prompt,
+    config: {
+      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          tempoPreparo: { type: Type.STRING },
+          rendimento: { type: Type.STRING },
+          ingredientes: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          },
+          modoPreparo: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          }
+        },
+        required: ["tempoPreparo", "rendimento", "ingredientes", "modoPreparo"]
+      }
+    }
   });
 
-  return response.text || "Não foi possível gerar a receita.";
+  const text = response.text;
+  if (!text) {
+    throw new Error("Não foi possível gerar a receita.");
+  }
+
+  return JSON.parse(text) as RecipeAnalysis;
 }

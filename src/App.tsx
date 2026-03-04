@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Markdown from 'react-markdown';
 import { Apple, History, Sparkles, ChevronRight, Search, Download, ChefHat, Send } from 'lucide-react';
 import ImageUpload from './components/ImageUpload';
-import { analyzeFoodImage, analyzeFoodText, askFoodQuestion, generateRecipe, FoodAnalysis } from './services/gemini';
+import { analyzeFoodImage, analyzeFoodText, askFoodQuestion, generateRecipe, FoodAnalysis, RecipeAnalysis } from './services/gemini';
 
 const EXAMPLES = [
   { name: 'Salada Fresh', url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=400&q=80' },
@@ -36,7 +36,7 @@ export default function App() {
   const [history, setHistory] = useState<{ id: string; result: FoodAnalysis; date: string }[]>([]);
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [recipe, setRecipe] = useState<string | null>(null);
+  const [recipe, setRecipe] = useState<RecipeAnalysis | null>(null);
   const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
   
   const [question, setQuestion] = useState('');
@@ -122,7 +122,8 @@ export default function App() {
       const res = await generateRecipe(analysis.nomePrato);
       setRecipe(res);
     } catch (error) {
-      setRecipe("Erro ao gerar receita. Tente novamente.");
+      setRecipe(null);
+      console.error("Erro ao gerar receita:", error);
     } finally {
       setIsGeneratingRecipe(false);
     }
@@ -464,8 +465,49 @@ export default function App() {
                                 <p className="font-medium">O chef IA está preparando a receita...</p>
                               </div>
                             ) : recipe ? (
-                              <div className="markdown-body prose prose-zinc prose-emerald max-w-none">
-                                <Markdown>{recipe}</Markdown>
+                              <div className="space-y-8">
+                                <div className="flex gap-4">
+                                  <div className="bg-orange-50 text-orange-700 px-4 py-3 rounded-2xl flex-1 text-center border border-orange-100">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1 opacity-80">Tempo de Preparo</p>
+                                    <p className="text-lg font-semibold">{recipe.tempoPreparo}</p>
+                                  </div>
+                                  <div className="bg-blue-50 text-blue-700 px-4 py-3 rounded-2xl flex-1 text-center border border-blue-100">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1 opacity-80">Rendimento</p>
+                                    <p className="text-lg font-semibold">{recipe.rendimento}</p>
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <h3 className="font-bold text-zinc-800 mb-4 flex items-center gap-2">
+                                    <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">🛒</span>
+                                    Ingredientes
+                                  </h3>
+                                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {recipe.ingredientes.map((ing, i) => (
+                                      <li key={i} className="bg-zinc-50 border border-zinc-100 p-3 rounded-xl flex items-start gap-3">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0" />
+                                        <span className="text-zinc-700 text-sm">{ing}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+
+                                <div>
+                                  <h3 className="font-bold text-zinc-800 mb-4 flex items-center gap-2">
+                                    <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">👨‍🍳</span>
+                                    Modo de Preparo
+                                  </h3>
+                                  <div className="space-y-4">
+                                    {recipe.modoPreparo.map((passo, i) => (
+                                      <div key={i} className="bg-white border border-zinc-200 p-4 rounded-2xl shadow-sm flex gap-4">
+                                        <div className="w-8 h-8 rounded-full bg-zinc-100 text-zinc-500 font-bold flex items-center justify-center flex-shrink-0">
+                                          {i + 1}
+                                        </div>
+                                        <p className="text-zinc-700 pt-1 text-sm leading-relaxed">{passo}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
                               </div>
                             ) : null}
                           </div>
