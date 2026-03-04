@@ -110,3 +110,120 @@ Se houver incerteza, mencione no campo "descricao".`;
 
   return JSON.parse(text) as FoodAnalysis;
 }
+
+export async function analyzeFoodText(foodName: string): Promise<FoodAnalysis> {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("Chave da API do Gemini não configurada.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
+  
+  const prompt = `Analise detalhadamente o seguinte alimento ou prato: "${foodName}".
+Responda APENAS em JSON válido.
+Não inclua explicações fora do JSON.
+Se houver incerteza, mencione no campo "descricao".`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: prompt,
+    config: {
+      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          nomePrato: { type: Type.STRING },
+          descricao: { type: Type.STRING },
+          calorias: {
+            type: Type.OBJECT,
+            properties: {
+              totalEstimado_kcal: { type: Type.STRING },
+              porPorcao_kcal: { type: Type.STRING }
+            },
+            required: ["totalEstimado_kcal", "porPorcao_kcal"]
+          },
+          macronutrientes: {
+            type: Type.OBJECT,
+            properties: {
+              proteinas_g: { type: Type.STRING },
+              carboidratos_g: { type: Type.STRING },
+              gorduras_g: { type: Type.STRING },
+              fibras_g: { type: Type.STRING }
+            },
+            required: ["proteinas_g", "carboidratos_g", "gorduras_g", "fibras_g"]
+          },
+          micronutrientesPrincipais: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          },
+          beneficiosSaude: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          },
+          riscosOuAlertas: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          },
+          sugestaoParaMelhorar: { type: Type.STRING }
+        },
+        required: [
+          "nomePrato",
+          "descricao",
+          "calorias",
+          "macronutrientes",
+          "micronutrientesPrincipais",
+          "beneficiosSaude",
+          "riscosOuAlertas",
+          "sugestaoParaMelhorar"
+        ],
+      },
+    }
+  });
+
+  const text = response.text;
+  if (!text) {
+    throw new Error("Não foi possível analisar o alimento.");
+  }
+
+  return JSON.parse(text) as FoodAnalysis;
+}
+
+export async function askFoodQuestion(analysis: FoodAnalysis, question: string): Promise<string> {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("Chave da API do Gemini não configurada.");
+  const ai = new GoogleGenAI({ apiKey });
+
+  const prompt = `Com base na seguinte análise de alimento:
+${JSON.stringify(analysis, null, 2)}
+
+Responda à seguinte dúvida do usuário de forma clara, concisa e em Português (Brasil):
+"${question}"`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: prompt,
+  });
+
+  return response.text || "Não foi possível gerar uma resposta.";
+}
+
+export async function generateRecipe(foodName: string): Promise<string> {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("Chave da API do Gemini não configurada.");
+  const ai = new GoogleGenAI({ apiKey });
+
+  const prompt = `Crie uma receita detalhada para preparar: "${foodName}".
+Inclua:
+1. Tempo de preparo e rendimento.
+2. Lista de ingredientes com quantidades.
+3. Modo de preparo passo a passo.
+Formate a resposta em Markdown, em Português (Brasil).`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: prompt,
+  });
+
+  return response.text || "Não foi possível gerar a receita.";
+}

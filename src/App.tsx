@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Markdown from 'react-markdown';
-import { Apple, History, Sparkles, ChevronRight } from 'lucide-react';
+import { Apple, History, Sparkles, ChevronRight, Search, Download, ChefHat, Send } from 'lucide-react';
 import ImageUpload from './components/ImageUpload';
-import { analyzeFoodImage, FoodAnalysis } from './services/gemini';
+import { analyzeFoodImage, analyzeFoodText, askFoodQuestion, generateRecipe, FoodAnalysis } from './services/gemini';
 
 const EXAMPLES = [
   { name: 'Salada Fresh', url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=400&q=80' },
@@ -30,16 +30,32 @@ const EXAMPLES = [
 
 export default function App() {
   const [analysis, setAnalysis] = useState<FoodAnalysis | null>(null);
-  const [activeTab, setActiveTab] = useState<'nutrition' | 'health'>('nutrition');
+  const [activeTab, setActiveTab] = useState<'nutrition' | 'health' | 'recipe'>('nutrition');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [history, setHistory] = useState<{ id: string; result: FoodAnalysis; date: string }[]>([]);
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [recipe, setRecipe] = useState<string | null>(null);
+  const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
+  
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [isAsking, setIsAsking] = useState(false);
+
+  const resetState = () => {
+    setAnalysis(null);
+    setActiveTab('nutrition');
+    setRecipe(null);
+    setAnswer(null);
+    setQuestion('');
+  };
 
   const handleImageSelect = async (base64: string) => {
     setPreview(base64);
+    setSearchQuery('');
     setIsAnalyzing(true);
-    setAnalysis(null);
-    setActiveTab('nutrition');
+    resetState();
     try {
       const result = await analyzeFoodImage(base64);
       setAnalysis(result);
@@ -62,6 +78,85 @@ export default function App() {
       });
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const handleTextSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    
+    setPreview(null);
+    setIsAnalyzing(true);
+    resetState();
+    
+    try {
+      const result = await analyzeFoodText(searchQuery);
+      setAnalysis(result);
+      setHistory(prev => [{
+        id: Date.now().toString(),
+        result,
+        date: new Date().toLocaleTimeString()
+      }, ...prev.slice(0, 4)]);
+    } catch (error) {
+      console.error("Analysis failed:", error);
+      setAnalysis({
+        nomePrato: "Erro na análise",
+        descricao: "Ocorreu um problema ao pesquisar o alimento. Por favor, tente novamente.",
+        calorias: { totalEstimado_kcal: "-", porPorcao_kcal: "-" },
+        macronutrientes: { proteinas_g: "-", carboidratos_g: "-", gorduras_g: "-", fibras_g: "-" },
+        micronutrientesPrincipais: [],
+        beneficiosSaude: [],
+        riscosOuAlertas: [],
+        sugestaoParaMelhorar: ""
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleGenerateRecipe = async () => {
+    if (!analysis) return;
+    setIsGeneratingRecipe(true);
+    setActiveTab('recipe');
+    try {
+      const res = await generateRecipe(analysis.nomePrato);
+      setRecipe(res);
+    } catch (error) {
+      setRecipe("Erro ao gerar receita. Tente novamente.");
+    } finally {
+      setIsGeneratingRecipe(false);
+    }
+  };
+
+  const handleAskQuestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!analysis || !question.trim()) return;
+    setIsAsking(true);
+    try {
+      const res = await askFoodQuestion(analysis, question);
+      setAnswer(res);
+      setQuestion('');
+    } catch (error) {
+      setAnswer("Erro ao responder a pergunta. Tente novamente.");
+    } finally {
+      setIsAsking(false);
+    }
+  };
+
+  const downloadImage = async (url: string, name: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${name.replace(/\s+/g, '_').toLowerCase()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Failed to download image", error);
     }
   };
 
@@ -119,13 +214,36 @@ export default function App() {
           {/* Left Column: Upload & Results */}
           <div className="space-y-8">
             <section>
+              <div className="mb-8">
+                <form onSubmit={handleTextSearch} className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-zinc-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Pesquise por qualquer alimento (ex: Maçã, Pizza de Calabresa)..."
+                    className="block w-full pl-11 pr-4 py-4 bg-white border border-zinc-200 rounded-2xl text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm transition-all"
+                    disabled={isAnalyzing}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!searchQuery.trim() || isAnalyzing}
+                    className="absolute inset-y-2 right-2 px-4 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Analisar
+                  </button>
+                </form>
+              </div>
+
               <ImageUpload 
                 onImageSelect={handleImageSelect} 
                 isAnalyzing={isAnalyzing} 
                 externalPreview={preview}
                 onReset={() => {
                   setPreview(null);
-                  setAnalysis(null);
+                  resetState();
                 }}
               />
 
@@ -133,22 +251,33 @@ export default function App() {
                 <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4">Experimente um exemplo</h3>
                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
                   {EXAMPLES.map((example) => (
-                    <button
-                      key={example.name}
-                      onClick={() => handleExampleClick(example.url)}
-                      disabled={isAnalyzing}
-                      className="group relative aspect-square rounded-2xl overflow-hidden border border-zinc-200 hover:border-emerald-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <img
-                        src={example.url}
-                        alt={example.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2">
-                        <span className="text-[8px] font-bold text-white uppercase tracking-tighter leading-none">{example.name}</span>
-                      </div>
-                    </button>
+                    <div key={example.name} className="group relative aspect-square rounded-2xl overflow-hidden border border-zinc-200 hover:border-emerald-500 transition-all">
+                      <button
+                        onClick={() => handleExampleClick(example.url)}
+                        disabled={isAnalyzing}
+                        className="w-full h-full disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <img
+                          src={example.url}
+                          alt={example.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2">
+                          <span className="text-[8px] font-bold text-white uppercase tracking-tighter leading-none">{example.name}</span>
+                        </div>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          downloadImage(example.url, example.name);
+                        }}
+                        className="absolute top-1 right-1 p-1.5 bg-white/80 backdrop-blur-sm rounded-full text-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white hover:text-emerald-600"
+                        title="Baixar imagem"
+                      >
+                        <Download className="w-3 h-3" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -220,6 +349,23 @@ export default function App() {
                         <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500" />
                       )}
                     </button>
+                    <button
+                      onClick={() => {
+                        if (!recipe && !isGeneratingRecipe) {
+                          handleGenerateRecipe();
+                        } else {
+                          setActiveTab('recipe');
+                        }
+                      }}
+                      className={`pb-3 px-4 text-sm font-medium transition-colors relative flex items-center gap-1 ${
+                        activeTab === 'recipe' ? 'text-emerald-600' : 'text-zinc-500 hover:text-zinc-700'
+                      }`}
+                    >
+                      <ChefHat className="w-4 h-4" /> Receita
+                      {activeTab === 'recipe' && (
+                        <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500" />
+                      )}
+                    </button>
                   </div>
                   
                   <div className="markdown-body prose prose-zinc max-w-none">
@@ -277,7 +423,7 @@ export default function App() {
                               </div>
                             )}
                           </div>
-                        ) : (
+                        ) : activeTab === 'health' ? (
                           <div className="space-y-6">
                             {analysis.beneficiosSaude.length > 0 && (
                               <div>
@@ -310,9 +456,64 @@ export default function App() {
                               </div>
                             )}
                           </div>
+                        ) : (
+                          <div className="space-y-6">
+                            {isGeneratingRecipe ? (
+                              <div className="flex flex-col items-center justify-center py-12 text-emerald-600">
+                                <ChefHat className="w-12 h-12 animate-bounce mb-4" />
+                                <p className="font-medium">O chef IA está preparando a receita...</p>
+                              </div>
+                            ) : recipe ? (
+                              <div className="markdown-body prose prose-zinc prose-emerald max-w-none">
+                                <Markdown>{recipe}</Markdown>
+                              </div>
+                            ) : null}
+                          </div>
                         )}
                       </motion.div>
                     </AnimatePresence>
+                  </div>
+
+                  {/* Q&A Section */}
+                  <div className="mt-10 pt-8 border-t border-zinc-200">
+                    <h3 className="font-bold text-zinc-800 mb-4 flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-emerald-500" />
+                      Ficou com alguma dúvida?
+                    </h3>
+                    
+                    {answer && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6 bg-zinc-50 p-5 rounded-2xl border border-zinc-200"
+                      >
+                        <div className="markdown-body prose prose-zinc prose-sm max-w-none">
+                          <Markdown>{answer}</Markdown>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    <form onSubmit={handleAskQuestion} className="relative">
+                      <input
+                        type="text"
+                        value={question}
+                        onChange={(e) => setQuestion(e.target.value)}
+                        placeholder="Pergunte algo sobre este alimento..."
+                        className="block w-full pl-4 pr-12 py-3 bg-white border border-zinc-200 rounded-xl text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm"
+                        disabled={isAsking}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!question.trim() || isAsking}
+                        className="absolute inset-y-1.5 right-1.5 p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {isAsking ? (
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                      </button>
+                    </form>
                   </div>
                 </motion.section>
               )}
