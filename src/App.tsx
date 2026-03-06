@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Markdown from 'react-markdown';
-import { Apple, History, Sparkles, ChevronRight, Search, Download, ChefHat, Send, Sun, Moon } from 'lucide-react';
+import { Apple, History, Sparkles, ChevronRight, Search, Download, ChefHat, Send, Sun, Moon, LogIn, LogOut } from 'lucide-react';
 import ImageUpload from './components/ImageUpload';
 import { analyzeFoodImage, analyzeFoodText, askFoodQuestion, generateRecipe, FoodAnalysis, RecipeAnalysis } from './services/gemini';
+import { supabase, loginWithGoogle, logout, saveAnalysisToHistory, getUserHistory } from './lib/supabase';
+import { User } from '@supabase/supabase-js';
 
 const EXAMPLES = [
   { name: 'Salada Fresh', url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=400&q=80' },
@@ -44,8 +46,32 @@ export default function App() {
   const [isAsking, setIsAsking] = useState(false);
   
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        getUserHistory(session.user.id).then(setHistory);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        const userHistory = await getUserHistory(session.user.id);
+        setHistory(userHistory);
+      } else {
+        setHistory([]);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -69,11 +95,17 @@ export default function App() {
     try {
       const result = await analyzeFoodImage(base64);
       setAnalysis(result);
+      
+      let historyId = Date.now().toString();
+      if (user) {
+        historyId = await saveAnalysisToHistory(user.id, result);
+      }
+      
       setHistory(prev => [{
-        id: Date.now().toString(),
+        id: historyId,
         result,
         date: new Date().toLocaleTimeString()
-      }, ...prev.slice(0, 4)]);
+      }, ...prev.slice(0, 19)]); // Keep up to 20 items locally
     } catch (error) {
       console.error("Analysis failed:", error);
       setAnalysis({
@@ -102,11 +134,17 @@ export default function App() {
     try {
       const result = await analyzeFoodText(searchQuery);
       setAnalysis(result);
+      
+      let historyId = Date.now().toString();
+      if (user) {
+        historyId = await saveAnalysisToHistory(user.id, result);
+      }
+      
       setHistory(prev => [{
-        id: Date.now().toString(),
+        id: historyId,
         result,
         date: new Date().toLocaleTimeString()
-      }, ...prev.slice(0, 4)]);
+      }, ...prev.slice(0, 19)]);
     } catch (error) {
       console.error("Analysis failed:", error);
       setAnalysis({
@@ -199,13 +237,37 @@ export default function App() {
             </div>
             <h1 className="text-xl font-bold tracking-tight text-zinc-800 dark:text-zinc-100">NutriLens</h1>
           </div>
-          <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-colors"
-            aria-label="Toggle dark mode"
-          >
-            {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
+          <div className="flex items-center gap-4">
+            {user ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hidden sm:block">
+                  {user.user_metadata?.full_name || user.email}
+                </span>
+                <button
+                  onClick={logout}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden sm:block">Sair</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={loginWithGoogle}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Entrar</span>
+              </button>
+            )}
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-colors"
+              aria-label="Toggle dark mode"
+            >
+              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -590,7 +652,7 @@ export default function App() {
               </div>
               
               {history.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                   {history.map((item) => (
                     <button
                       key={item.id}
@@ -609,7 +671,15 @@ export default function App() {
                 </div>
               ) : (
                 <div className="py-12 text-center">
-                  <p className="text-sm text-zinc-400 dark:text-zinc-500">Nenhuma análise recente.</p>
+                  <p className="text-sm text-zinc-400 dark:text-zinc-500 mb-4">Nenhuma análise recente.</p>
+                  {!user && (
+                    <button
+                      onClick={loginWithGoogle}
+                      className="text-sm text-emerald-600 dark:text-emerald-400 font-medium hover:underline"
+                    >
+                      Faça login para salvar seu histórico
+                    </button>
+                  )}
                 </div>
               )}
             </section>
