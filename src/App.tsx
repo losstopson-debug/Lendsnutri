@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Markdown from 'react-markdown';
-import { Apple, History, Sparkles, ChevronRight, Search, Download, ChefHat, Send } from 'lucide-react';
+import { Apple, History, Sparkles, ChevronRight, Search, Download, ChefHat, Send, Sun, Moon } from 'lucide-react';
 import ImageUpload from './components/ImageUpload';
 import { analyzeFoodImage, analyzeFoodText, askFoodQuestion, generateRecipe, FoodAnalysis, RecipeAnalysis } from './services/gemini';
 
@@ -42,6 +42,16 @@ export default function App() {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<string | null>(null);
   const [isAsking, setIsAsking] = useState(false);
+  
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  React.useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
   const resetState = () => {
     setAnalysis(null);
@@ -179,16 +189,23 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-zinc-900 font-sans pb-20">
+    <div className="min-h-screen bg-[#F8F9FA] dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans pb-20 transition-colors duration-300">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-200 px-6 py-4">
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 px-6 py-4 transition-colors duration-300">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
+            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200 dark:shadow-emerald-900/20">
               <Apple className="text-white w-6 h-6" />
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-zinc-800">NutriLens</h1>
+            <h1 className="text-xl font-bold tracking-tight text-zinc-800 dark:text-zinc-100">NutriLens</h1>
           </div>
+          <button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-colors"
+            aria-label="Toggle dark mode"
+          >
+            {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
         </div>
       </header>
 
@@ -225,7 +242,7 @@ export default function App() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Pesquise por qualquer alimento (ex: Maçã, Pizza de Calabresa)..."
-                    className="block w-full pl-11 pr-4 py-4 bg-white border border-zinc-200 rounded-2xl text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm transition-all"
+                    className="block w-full pl-11 pr-4 py-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm transition-all"
                     disabled={isAnalyzing}
                   />
                   <button
@@ -249,10 +266,10 @@ export default function App() {
               />
 
               <div className="mt-8">
-                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4">Experimente um exemplo</h3>
+                <h3 className="text-sm font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-4">Experimente um exemplo</h3>
                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
                   {EXAMPLES.map((example) => (
-                    <div key={example.name} className="group relative aspect-square rounded-2xl overflow-hidden border border-zinc-200 hover:border-emerald-500 transition-all">
+                    <div key={example.name} className="group relative aspect-square rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 hover:border-emerald-500 dark:hover:border-emerald-500 transition-all">
                       <button
                         onClick={() => handleExampleClick(example.url)}
                         disabled={isAnalyzing}
@@ -273,7 +290,7 @@ export default function App() {
                           e.stopPropagation();
                           downloadImage(example.url, example.name);
                         }}
-                        className="absolute top-1 right-1 p-1.5 bg-white/80 backdrop-blur-sm rounded-full text-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white hover:text-emerald-600"
+                        className="absolute top-1 right-1 p-1.5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm rounded-full text-zinc-700 dark:text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white dark:hover:bg-zinc-800 hover:text-emerald-600 dark:hover:text-emerald-400"
                         title="Baixar imagem"
                       >
                         <Download className="w-3 h-3" />
@@ -290,23 +307,23 @@ export default function App() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-white rounded-3xl p-8 shadow-sm border border-zinc-100"
+                  className="bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-zinc-100 dark:border-zinc-800"
                 >
                   <div className="flex items-center gap-3 mb-8">
-                    <div className="w-12 h-12 bg-zinc-100 rounded-2xl animate-pulse" />
+                    <div className="w-12 h-12 bg-zinc-100 dark:bg-zinc-800 rounded-2xl animate-pulse" />
                     <div className="space-y-2">
-                      <div className="w-32 h-4 bg-zinc-100 rounded animate-pulse" />
-                      <div className="w-20 h-3 bg-zinc-50 rounded animate-pulse" />
+                      <div className="w-32 h-4 bg-zinc-100 dark:bg-zinc-800 rounded animate-pulse" />
+                      <div className="w-20 h-3 bg-zinc-50 dark:bg-zinc-800/50 rounded animate-pulse" />
                     </div>
                   </div>
                   
                   <div className="space-y-4">
-                    <div className="w-full h-4 bg-zinc-100 rounded animate-pulse" />
-                    <div className="w-full h-4 bg-zinc-100 rounded animate-pulse" />
-                    <div className="w-3/4 h-4 bg-zinc-100 rounded animate-pulse" />
+                    <div className="w-full h-4 bg-zinc-100 dark:bg-zinc-800 rounded animate-pulse" />
+                    <div className="w-full h-4 bg-zinc-100 dark:bg-zinc-800 rounded animate-pulse" />
+                    <div className="w-3/4 h-4 bg-zinc-100 dark:bg-zinc-800 rounded animate-pulse" />
                     <div className="pt-4 space-y-3">
-                      <div className="w-full h-20 bg-zinc-50 rounded-2xl animate-pulse" />
-                      <div className="w-full h-20 bg-zinc-50 rounded-2xl animate-pulse" />
+                      <div className="w-full h-20 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl animate-pulse" />
+                      <div className="w-full h-20 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl animate-pulse" />
                     </div>
                   </div>
                 </motion.section>
@@ -317,21 +334,21 @@ export default function App() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-white rounded-3xl p-8 shadow-sm border border-zinc-100"
+                  className="bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-zinc-100 dark:border-zinc-800"
                 >
-                  <div className="flex items-center gap-2 mb-6 text-emerald-600">
+                  <div className="flex items-center gap-2 mb-6 text-emerald-600 dark:text-emerald-400">
                     <Sparkles className="w-5 h-5" />
                     <span className="font-semibold uppercase tracking-wider text-xs">Análise Inteligente</span>
                   </div>
                   
-                  <h2 className="text-2xl font-bold text-zinc-800 mb-2">{analysis.nomePrato}</h2>
-                  <p className="text-zinc-600 mb-6">{analysis.descricao}</p>
+                  <h2 className="text-2xl font-bold text-zinc-800 dark:text-zinc-100 mb-2">{analysis.nomePrato}</h2>
+                  <p className="text-zinc-600 dark:text-zinc-400 mb-6">{analysis.descricao}</p>
 
-                  <div className="flex border-b border-zinc-200 mb-6">
+                  <div className="flex border-b border-zinc-200 dark:border-zinc-800 mb-6">
                     <button
                       onClick={() => setActiveTab('nutrition')}
                       className={`pb-3 px-4 text-sm font-medium transition-colors relative ${
-                        activeTab === 'nutrition' ? 'text-emerald-600' : 'text-zinc-500 hover:text-zinc-700'
+                        activeTab === 'nutrition' ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
                       }`}
                     >
                       Informações Nutricionais
@@ -342,7 +359,7 @@ export default function App() {
                     <button
                       onClick={() => setActiveTab('health')}
                       className={`pb-3 px-4 text-sm font-medium transition-colors relative ${
-                        activeTab === 'health' ? 'text-emerald-600' : 'text-zinc-500 hover:text-zinc-700'
+                        activeTab === 'health' ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
                       }`}
                     >
                       Insights de Saúde
@@ -359,7 +376,7 @@ export default function App() {
                         }
                       }}
                       className={`pb-3 px-4 text-sm font-medium transition-colors relative flex items-center gap-1 ${
-                        activeTab === 'recipe' ? 'text-emerald-600' : 'text-zinc-500 hover:text-zinc-700'
+                        activeTab === 'recipe' ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
                       }`}
                     >
                       <ChefHat className="w-4 h-4" /> Receita
@@ -369,7 +386,7 @@ export default function App() {
                     </button>
                   </div>
                   
-                  <div className="markdown-body prose prose-zinc max-w-none">
+                  <div className="markdown-body prose prose-zinc dark:prose-invert max-w-none">
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={activeTab}
@@ -381,42 +398,42 @@ export default function App() {
                         {activeTab === 'nutrition' ? (
                           <div className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
-                              <div className="bg-zinc-50 p-4 rounded-2xl">
-                                <p className="text-sm text-zinc-500 mb-1">Calorias (Total)</p>
-                                <p className="text-xl font-bold text-zinc-800">{analysis.calorias.totalEstimado_kcal} kcal</p>
+                              <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-2xl">
+                                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">Calorias (Total)</p>
+                                <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{analysis.calorias.totalEstimado_kcal} kcal</p>
                               </div>
-                              <div className="bg-zinc-50 p-4 rounded-2xl">
-                                <p className="text-sm text-zinc-500 mb-1">Calorias (Porção)</p>
-                                <p className="text-xl font-bold text-zinc-800">{analysis.calorias.porPorcao_kcal} kcal</p>
+                              <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-2xl">
+                                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">Calorias (Porção)</p>
+                                <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{analysis.calorias.porPorcao_kcal} kcal</p>
                               </div>
                             </div>
                             
                             <div>
-                              <h3 className="font-bold text-zinc-800 mb-3">Macronutrientes</h3>
+                              <h3 className="font-bold text-zinc-800 dark:text-zinc-100 mb-3">Macronutrientes</h3>
                               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                                  <p className="text-xs text-blue-600 font-medium mb-1">Proteínas</p>
-                                  <p className="text-lg font-bold text-blue-900">{analysis.macronutrientes.proteinas_g}g</p>
+                                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                                  <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Proteínas</p>
+                                  <p className="text-lg font-bold text-blue-900 dark:text-blue-100">{analysis.macronutrientes.proteinas_g}g</p>
                                 </div>
-                                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                                  <p className="text-xs text-orange-600 font-medium mb-1">Carboidratos</p>
-                                  <p className="text-lg font-bold text-orange-900">{analysis.macronutrientes.carboidratos_g}g</p>
+                                <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-xl border border-orange-100 dark:border-orange-900/30">
+                                  <p className="text-xs text-orange-600 dark:text-orange-400 font-medium mb-1">Carboidratos</p>
+                                  <p className="text-lg font-bold text-orange-900 dark:text-orange-100">{analysis.macronutrientes.carboidratos_g}g</p>
                                 </div>
-                                <div className="bg-yellow-50 p-3 rounded-xl border border-yellow-100">
-                                  <p className="text-xs text-yellow-600 font-medium mb-1">Gorduras</p>
-                                  <p className="text-lg font-bold text-yellow-900">{analysis.macronutrientes.gorduras_g}g</p>
+                                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-xl border border-yellow-100 dark:border-yellow-900/30">
+                                  <p className="text-xs text-yellow-600 dark:text-yellow-400 font-medium mb-1">Gorduras</p>
+                                  <p className="text-lg font-bold text-yellow-900 dark:text-yellow-100">{analysis.macronutrientes.gorduras_g}g</p>
                                 </div>
-                                <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100">
-                                  <p className="text-xs text-emerald-600 font-medium mb-1">Fibras</p>
-                                  <p className="text-lg font-bold text-emerald-900">{analysis.macronutrientes.fibras_g}g</p>
+                                <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
+                                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mb-1">Fibras</p>
+                                  <p className="text-lg font-bold text-emerald-900 dark:text-emerald-100">{analysis.macronutrientes.fibras_g}g</p>
                                 </div>
                               </div>
                             </div>
 
                             {analysis.micronutrientesPrincipais.length > 0 && (
                               <div>
-                                <h3 className="font-bold text-zinc-800 mb-3">Micronutrientes Principais</h3>
-                                <ul className="list-disc pl-5 space-y-1 text-zinc-700">
+                                <h3 className="font-bold text-zinc-800 dark:text-zinc-100 mb-3">Micronutrientes Principais</h3>
+                                <ul className="list-disc pl-5 space-y-1 text-zinc-700 dark:text-zinc-300">
                                   {analysis.micronutrientesPrincipais.map((micro, i) => (
                                     <li key={i}>{micro}</li>
                                   ))}
@@ -428,10 +445,10 @@ export default function App() {
                           <div className="space-y-6">
                             {analysis.beneficiosSaude.length > 0 && (
                               <div>
-                                <h3 className="font-bold text-emerald-700 mb-3 flex items-center gap-2">
+                                <h3 className="font-bold text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
                                   <Sparkles className="w-4 h-4" /> Benefícios
                                 </h3>
-                                <ul className="list-disc pl-5 space-y-1 text-zinc-700">
+                                <ul className="list-disc pl-5 space-y-1 text-zinc-700 dark:text-zinc-300">
                                   {analysis.beneficiosSaude.map((ben, i) => (
                                     <li key={i}>{ben}</li>
                                   ))}
@@ -441,8 +458,8 @@ export default function App() {
 
                             {analysis.riscosOuAlertas.length > 0 && (
                               <div>
-                                <h3 className="font-bold text-red-600 mb-3">Alertas</h3>
-                                <ul className="list-disc pl-5 space-y-1 text-zinc-700">
+                                <h3 className="font-bold text-red-600 dark:text-red-400 mb-3">Alertas</h3>
+                                <ul className="list-disc pl-5 space-y-1 text-zinc-700 dark:text-zinc-300">
                                   {analysis.riscosOuAlertas.map((risco, i) => (
                                     <li key={i}>{risco}</li>
                                   ))}
@@ -451,59 +468,59 @@ export default function App() {
                             )}
 
                             {analysis.sugestaoParaMelhorar && (
-                              <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
-                                <h3 className="font-bold text-emerald-800 mb-2">Sugestão para Melhorar</h3>
-                                <p className="text-emerald-900 text-sm">{analysis.sugestaoParaMelhorar}</p>
+                              <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-900/30">
+                                <h3 className="font-bold text-emerald-800 dark:text-emerald-300 mb-2">Sugestão para Melhorar</h3>
+                                <p className="text-emerald-900 dark:text-emerald-100 text-sm">{analysis.sugestaoParaMelhorar}</p>
                               </div>
                             )}
                           </div>
                         ) : (
                           <div className="space-y-6">
                             {isGeneratingRecipe ? (
-                              <div className="flex flex-col items-center justify-center py-12 text-emerald-600">
+                              <div className="flex flex-col items-center justify-center py-12 text-emerald-600 dark:text-emerald-400">
                                 <ChefHat className="w-12 h-12 animate-bounce mb-4" />
                                 <p className="font-medium">O chef IA está preparando a receita...</p>
                               </div>
                             ) : recipe ? (
                               <div className="space-y-8">
                                 <div className="flex gap-4">
-                                  <div className="bg-orange-50 text-orange-700 px-4 py-3 rounded-2xl flex-1 text-center border border-orange-100">
+                                  <div className="bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 px-4 py-3 rounded-2xl flex-1 text-center border border-orange-100 dark:border-orange-900/30">
                                     <p className="text-[10px] font-bold uppercase tracking-wider mb-1 opacity-80">Tempo de Preparo</p>
                                     <p className="text-lg font-semibold">{recipe.tempoPreparo}</p>
                                   </div>
-                                  <div className="bg-blue-50 text-blue-700 px-4 py-3 rounded-2xl flex-1 text-center border border-blue-100">
+                                  <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 px-4 py-3 rounded-2xl flex-1 text-center border border-blue-100 dark:border-blue-900/30">
                                     <p className="text-[10px] font-bold uppercase tracking-wider mb-1 opacity-80">Rendimento</p>
                                     <p className="text-lg font-semibold">{recipe.rendimento}</p>
                                   </div>
                                 </div>
 
                                 <div>
-                                  <h3 className="font-bold text-zinc-800 mb-4 flex items-center gap-2">
-                                    <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">🛒</span>
+                                  <h3 className="font-bold text-zinc-800 dark:text-zinc-100 mb-4 flex items-center gap-2">
+                                    <span className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm">🛒</span>
                                     Ingredientes
                                   </h3>
                                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     {recipe.ingredientes.map((ing, i) => (
-                                      <li key={i} className="bg-zinc-50 border border-zinc-100 p-3 rounded-xl flex items-start gap-3">
+                                      <li key={i} className="bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 p-3 rounded-xl flex items-start gap-3">
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0" />
-                                        <span className="text-zinc-700 text-sm">{ing}</span>
+                                        <span className="text-zinc-700 dark:text-zinc-300 text-sm">{ing}</span>
                                       </li>
                                     ))}
                                   </ul>
                                 </div>
 
                                 <div>
-                                  <h3 className="font-bold text-zinc-800 mb-4 flex items-center gap-2">
-                                    <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">👨‍🍳</span>
+                                  <h3 className="font-bold text-zinc-800 dark:text-zinc-100 mb-4 flex items-center gap-2">
+                                    <span className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm">👨‍🍳</span>
                                     Modo de Preparo
                                   </h3>
                                   <div className="space-y-4">
                                     {recipe.modoPreparo.map((passo, i) => (
-                                      <div key={i} className="bg-white border border-zinc-200 p-4 rounded-2xl shadow-sm flex gap-4">
-                                        <div className="w-8 h-8 rounded-full bg-zinc-100 text-zinc-500 font-bold flex items-center justify-center flex-shrink-0">
+                                      <div key={i} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded-2xl shadow-sm flex gap-4">
+                                        <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-bold flex items-center justify-center flex-shrink-0">
                                           {i + 1}
                                         </div>
-                                        <p className="text-zinc-700 pt-1 text-sm leading-relaxed">{passo}</p>
+                                        <p className="text-zinc-700 dark:text-zinc-300 pt-1 text-sm leading-relaxed">{passo}</p>
                                       </div>
                                     ))}
                                   </div>
@@ -517,8 +534,8 @@ export default function App() {
                   </div>
 
                   {/* Q&A Section */}
-                  <div className="mt-10 pt-8 border-t border-zinc-200">
-                    <h3 className="font-bold text-zinc-800 mb-4 flex items-center gap-2">
+                  <div className="mt-10 pt-8 border-t border-zinc-200 dark:border-zinc-800">
+                    <h3 className="font-bold text-zinc-800 dark:text-zinc-100 mb-4 flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-emerald-500" />
                       Ficou com alguma dúvida?
                     </h3>
@@ -527,9 +544,9 @@ export default function App() {
                       <motion.div 
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mb-6 bg-zinc-50 p-5 rounded-2xl border border-zinc-200"
+                        className="mb-6 bg-zinc-50 dark:bg-zinc-800/50 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800"
                       >
-                        <div className="markdown-body prose prose-zinc prose-sm max-w-none">
+                        <div className="markdown-body prose prose-zinc dark:prose-invert prose-sm max-w-none">
                           <Markdown>{answer}</Markdown>
                         </div>
                       </motion.div>
@@ -541,7 +558,7 @@ export default function App() {
                         value={question}
                         onChange={(e) => setQuestion(e.target.value)}
                         placeholder="Pergunte algo sobre este alimento..."
-                        className="block w-full pl-4 pr-12 py-3 bg-white border border-zinc-200 rounded-xl text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm"
+                        className="block w-full pl-4 pr-12 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm"
                         disabled={isAsking}
                       />
                       <button
@@ -564,10 +581,10 @@ export default function App() {
 
           {/* Right Column: History & Stats */}
           <aside className="space-y-8 sticky top-28">
-            <section className="bg-white rounded-3xl p-6 shadow-sm border border-zinc-100">
+            <section className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-100 dark:border-zinc-800">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold flex items-center gap-2">
-                  <History className="w-4 h-4 text-zinc-400" />
+                <h3 className="font-bold flex items-center gap-2 text-zinc-800 dark:text-zinc-100">
+                  <History className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
                   Recentes
                 </h3>
               </div>
@@ -578,21 +595,21 @@ export default function App() {
                     <button
                       key={item.id}
                       onClick={() => setAnalysis(item.result)}
-                      className="w-full text-left p-4 rounded-2xl border border-zinc-50 hover:bg-zinc-50 hover:border-zinc-200 transition-all group flex items-center justify-between"
+                      className="w-full text-left p-4 rounded-2xl border border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all group flex items-center justify-between"
                     >
                       <div>
-                        <p className="text-sm font-medium text-zinc-800">
+                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
                           {item.result.nomePrato || 'Análise de Alimento'}
                         </p>
-                        <p className="text-xs text-zinc-400">{item.date}</p>
+                        <p className="text-xs text-zinc-400 dark:text-zinc-500">{item.date}</p>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-zinc-300 group-hover:text-zinc-500 transition-colors" />
+                      <ChevronRight className="w-4 h-4 text-zinc-300 dark:text-zinc-600 group-hover:text-zinc-500 dark:group-hover:text-zinc-400 transition-colors" />
                     </button>
                   ))}
                 </div>
               ) : (
                 <div className="py-12 text-center">
-                  <p className="text-sm text-zinc-400">Nenhuma análise recente.</p>
+                  <p className="text-sm text-zinc-400 dark:text-zinc-500">Nenhuma análise recente.</p>
                 </div>
               )}
             </section>
@@ -601,12 +618,12 @@ export default function App() {
       </main>
 
       {/* Mobile Navigation Placeholder */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 px-8 py-4 flex justify-around items-center z-50">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 px-8 py-4 flex justify-around items-center z-50 transition-colors duration-300">
         <button className="text-emerald-500 flex flex-col items-center gap-1">
           <Apple className="w-6 h-6" />
           <span className="text-[10px] font-bold uppercase">Início</span>
         </button>
-        <button className="text-zinc-400 flex flex-col items-center gap-1">
+        <button className="text-zinc-400 dark:text-zinc-500 flex flex-col items-center gap-1">
           <History className="w-6 h-6" />
           <span className="text-[10px] font-bold uppercase">Histórico</span>
         </button>

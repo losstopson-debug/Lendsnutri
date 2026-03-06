@@ -76,10 +76,10 @@ export default function ImageUpload({ onImageSelect, isAnalyzing, externalPrevie
         <div className="grid grid-cols-2 gap-4">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-zinc-300 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50 transition-all group"
+            className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all group"
           >
-            <Upload className="w-8 h-8 mb-2 text-zinc-400 group-hover:text-emerald-500" />
-            <span className="text-sm font-medium text-zinc-600 group-hover:text-emerald-700">Upload Foto</span>
+            <Upload className="w-8 h-8 mb-2 text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-500 dark:group-hover:text-emerald-400" />
+            <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400 group-hover:text-emerald-700 dark:group-hover:text-emerald-300">Upload Foto</span>
             <input
               type="file"
               ref={fileInputRef}
@@ -91,10 +91,10 @@ export default function ImageUpload({ onImageSelect, isAnalyzing, externalPrevie
           
           <button
             onClick={startCamera}
-            className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-zinc-300 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50 transition-all group"
+            className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all group"
           >
-            <Camera className="w-8 h-8 mb-2 text-zinc-400 group-hover:text-emerald-500" />
-            <span className="text-sm font-medium text-zinc-600 group-hover:text-emerald-700">Tirar Foto</span>
+            <Camera className="w-8 h-8 mb-2 text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-500 dark:group-hover:text-emerald-400" />
+            <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400 group-hover:text-emerald-700 dark:group-hover:text-emerald-300">Tirar Foto</span>
           </button>
         </div>
       ) : isCameraOpen ? (
@@ -167,7 +167,7 @@ export default function ImageUpload({ onImageSelect, isAnalyzing, externalPrevie
             ) : (
               <button
                 onClick={reset}
-                className="p-3 bg-white rounded-full text-zinc-900 shadow-lg hover:bg-zinc-100 transition-transform hover:scale-110 active:scale-95"
+                className="p-3 bg-white dark:bg-zinc-800 rounded-full text-zinc-900 dark:text-zinc-100 shadow-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-transform hover:scale-110 active:scale-95"
               >
                 <X className="w-6 h-6" />
               </button>
