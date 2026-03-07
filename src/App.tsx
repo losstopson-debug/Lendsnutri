@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Markdown from 'react-markdown';
-import { Apple, History, Sparkles, ChevronRight, Search, Download, ChefHat, Send, Sun, Moon, LogIn, LogOut } from 'lucide-react';
+import { Apple, History, Sparkles, ChevronRight, Search, Download, ChefHat, Send, Sun, Moon, LogIn, LogOut, Github } from 'lucide-react';
 import ImageUpload from './components/ImageUpload';
 import { analyzeFoodImage, analyzeFoodText, askFoodQuestion, generateRecipe, FoodAnalysis, RecipeAnalysis } from './services/gemini';
-import { supabase, loginWithGoogle, logout, saveAnalysisToHistory, getUserHistory } from './lib/supabase';
+import { supabase, loginWithGoogle, loginWithGithub, logout, saveAnalysisToHistory, getUserHistory } from './lib/supabase';
 import { User } from '@supabase/supabase-js';
 
 const EXAMPLES = [
@@ -252,13 +252,22 @@ export default function App() {
                 </button>
               </div>
             ) : (
-              <button
-                onClick={loginWithGoogle}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
-              >
-                <LogIn className="w-4 h-4" />
-                <span>Entrar</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={loginWithGoogle}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span className="hidden sm:block">Google</span>
+                </button>
+                <button
+                  onClick={loginWithGithub}
+                  className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-900 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
+                >
+                  <Github className="w-4 h-4" />
+                  <span className="hidden sm:block">GitHub</span>
+                </button>
+              </div>
             )}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
@@ -673,12 +682,22 @@ export default function App() {
                 <div className="py-12 text-center">
                   <p className="text-sm text-zinc-400 dark:text-zinc-500 mb-4">Nenhuma análise recente.</p>
                   {!user && (
-                    <button
-                      onClick={loginWithGoogle}
-                      className="text-sm text-emerald-600 dark:text-emerald-400 font-medium hover:underline"
-                    >
-                      Faça login para salvar seu histórico
-                    </button>
+                    <div className="flex flex-col gap-2 items-center">
+                      <button
+                        onClick={loginWithGoogle}
+                        className="text-sm text-emerald-600 dark:text-emerald-400 font-medium hover:underline flex items-center gap-1"
+                      >
+                        <LogIn className="w-4 h-4" />
+                        Faça login com Google para salvar seu histórico
+                      </button>
+                      <button
+                        onClick={loginWithGithub}
+                        className="text-sm text-zinc-600 dark:text-zinc-400 font-medium hover:underline flex items-center gap-1"
+                      >
+                        <Github className="w-4 h-4" />
+                        Faça login com GitHub para salvar seu histórico
+                      </button>
+                    </div>
                   )}
                 </div>
               )}

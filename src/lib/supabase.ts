@@ -17,6 +17,17 @@ export const loginWithGoogle = async () => {
   return data;
 };
 
+export const loginWithGithub = async () => {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'github',
+  });
+  if (error) {
+    console.error("Error signing in with GitHub", error);
+    throw error;
+  }
+  return data;
+};
+
 export const logout = async () => {
   const { error } = await supabase.auth.signOut();
   if (error) {
