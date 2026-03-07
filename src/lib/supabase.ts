@@ -9,6 +9,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export const loginWithGoogle = async () => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
+    options: {
+      redirectTo: window.location.origin
+    }
   });
   if (error) {
     console.error("Error signing in with Google", error);
@@ -20,6 +23,9 @@ export const loginWithGoogle = async () => {
 export const loginWithGithub = async () => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'github',
+    options: {
+      redirectTo: window.location.origin
+    }
   });
   if (error) {
     console.error("Error signing in with GitHub", error);

@@ -252,20 +252,20 @@ export default function App() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-center gap-2">
                 <button
                   onClick={loginWithGoogle}
                   className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
                 >
                   <LogIn className="w-4 h-4" />
-                  <span className="hidden sm:block">Google</span>
+                  <span className="hidden sm:block">Criar conta / Entrar com Google</span>
                 </button>
                 <button
                   onClick={loginWithGithub}
                   className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-900 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
                 >
                   <Github className="w-4 h-4" />
-                  <span className="hidden sm:block">GitHub</span>
+                  <span className="hidden sm:block">Criar conta / Entrar com GitHub</span>
                 </button>
               </div>
             )}
@@ -682,20 +682,20 @@ export default function App() {
                 <div className="py-12 text-center">
                   <p className="text-sm text-zinc-400 dark:text-zinc-500 mb-4">Nenhuma análise recente.</p>
                   {!user && (
-                    <div className="flex flex-col gap-2 items-center">
+                    <div className="flex flex-col gap-3 items-center">
                       <button
                         onClick={loginWithGoogle}
                         className="text-sm text-emerald-600 dark:text-emerald-400 font-medium hover:underline flex items-center gap-1"
                       >
                         <LogIn className="w-4 h-4" />
-                        Faça login com Google para salvar seu histórico
+                        Criar conta / Entrar com Google para salvar seu histórico
                       </button>
                       <button
                         onClick={loginWithGithub}
                         className="text-sm text-zinc-600 dark:text-zinc-400 font-medium hover:underline flex items-center gap-1"
                       >
                         <Github className="w-4 h-4" />
-                        Faça login com GitHub para salvar seu histórico
+                        Criar conta / Entrar com GitHub para salvar seu histórico
                       </button>
                     </div>
                   )}
